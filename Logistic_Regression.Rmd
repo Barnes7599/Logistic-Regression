@@ -1,0 +1,7 @@
+---
+title: "Logistic_Regression"
+author: "Jason Barnes"
+date: "5/21/2019"
+output: pdf_document
+---
+# Logistic Regression is used for classification. 
