@@ -93,13 +93,13 @@ df.train$Pclass <- as.factor(df.train$Pclass)
 #df.train$Parch <- as.factor(df.train$Parch)
 df.train$SibSp <- as.factor(df.train$SibSp)
 
+
 str(df.train)
 
 log.model <- glm(Survived ~ ., family = binomial(link = 'logit'), data = df.train)
 
 summary(log.model)
 #*** low probablity of the varible not being significant
-
 
 # Lets perdict off the train set by spliting 70/30
 
