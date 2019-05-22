@@ -72,6 +72,57 @@ impute_age <- function(age, class){
     return(out)
 }
 
+# now pass in impute ages to fixed.ages function
 fixed.ages <-  impute_age(df.train$Age, df.train$Pclass)
+
+df.train$Age <- fixed.ages
+
+#check for any na data again
+missmap(df.train, main = 'Imputation Check', col = c('yellow', 'black'),legend = FALSE)
+
+# Look the data one more time to determine what columns you want to use in the model
+str(df.train)
+
+# remove the columns you do not want
+df.train <- df.train %>% 
+    select(-PassengerId, -Name, -Ticket, -Cabin, -Parch)
+
+head(df.train)
+df.train$Survived <- as.factor(df.train$Survived)
+df.train$Pclass <- as.factor(df.train$Pclass)
+#df.train$Parch <- as.factor(df.train$Parch)
+df.train$SibSp <- as.factor(df.train$SibSp)
+
+str(df.train)
+
+log.model <- glm(Survived ~ ., family = binomial(link = 'logit'), data = df.train)
+
+summary(log.model)
+#*** low probablity of the varible not being significant
+
+
+# Lets perdict off the train set by spliting 70/30
+
+library(caTools)
+set.seed(101)
+split <- sample.split(df.train$Survived, SplitRatio = 0.7)
+final.train <- subset(df.train, split == TRUE)
+final.test <- subset(df.train, split == FALSE)
+
+final.log.model <- glm(Survived ~ ., family = binomial(link = 'logit'), data = final.train)
+summary(final.log.model)
+
+fitted.probabilities <-  predict(final.log.model, final.test, type = 'response') # type is equal to response because we are trying to predict whether the lived or died or 0 and 1
+
+fitted.results <- ifelse(fitted.probabilities > 0.5, 1, 0) # short hand if statement, all this says is if fitted.probabilities is greater than .5 then assign it a one else assign it a zero. 
+
+missClassError <-  mean(fitted.results != final.test$Survived)
+
+#check the accuracy
+accuaracy <- 1 - missClassError
+
+#confusion matrix
+table(final.test$Survived, fitted.probabilities > 0.5)
+
 
 
