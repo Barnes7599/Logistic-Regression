@@ -1,12 +1,14 @@
 ---
 title: "Logistic Regression"
 output: pdf_document
+fontsize: 12pt
+geometry: margin=1in
 ---
 Logistic Regression is used for classification. In linear regression the response varible (Y) is quantitative, but in many situations the response variable can be qualitative or categorical. Predicting a qualitative response for an observation can be referred to as classifying that observation, since it involves assigning the observation to a category, or class. On the other hand, often the methods used for classification first predict the probability of each of the categories of a qualitative variable, as the basis for making the classification. In this sense they also behave like regression methods. 
 
 There are many possible classification techniques, or classifiers, that one might use to predict a qualitative response. Three of the most qualitative classification classifiers widely-used are: logistic regression, linear discriminant analysis, and logistic K-nearest neighbors.
 
-##### Example Classification problems:
+#### Example Classification problems:
 1. A person arrives at the emergency room with a set of symptoms that could possibly be attributed to one of three medical conditions. Which of the three conditions does the individual have?
 2. An online banking service must be able to determine whether or not a transaction being performed on the site is fraudulent, on the basis of the user’s IP address, past transaction history, and so forth.
 3. On the basis of DNA sequence data for a number of patients with and without a given disease, a biologist would like to figure out which DNA mutations are deleterious (disease-causing) and which are not.
@@ -17,7 +19,7 @@ Sigmoid function: always produces results in a probability from 0 to 1 of belong
 
 After you train a logistic regression model on some training data, you will evaluate your model's performance on some test data. You can use a confusion matrix to evaluate classification models. 
 
-##### Terminology
+#### Terminology
 True Positive (TP) cases in which we perdicted positive and in reality the the test is positive
 
 True Negative (TN) cases in which we perdicted negative and in reality the test is negative
@@ -28,30 +30,37 @@ False Negatives (FN) cases in whch we predicted negative and in reality the test
 
 Misclassification rate (error rate) measures overall how often we are wrong. 
 
-##### Measuring Accuracy
+#### Measuring Accuracy
 To calculate the accuracy of the model you would take (TP + TN) / total 
 
 To calculate the misclassifiation rate you would take (FP + FN) / total
 
-##### Getting started
+#### Getting started
 You will need to import the following libraries:
 
 1. tidyverse
 2. ggthemes
 3. Amelia
 4. kableExtra
+5. knitr
+6. devtools
+7. knitcitations
 
 ```{r include=FALSE}
 library(tidyverse)
 library(ggthemes)
 library(Amelia)
 library(kableExtra)
+library(knitr)
+library(devtools)
+library(knitcitations)
 df.train <- read.csv("titanic_train.csv")
 ```
 
-##### Explore the data
+#### Explore the data
 ```{r}
-kable(head(df.train))
+kable(head(df.train)) %>% 
+    kable_styling(bootstrap_options = "condensed")
 
 ```
 
@@ -59,6 +68,8 @@ kable(head(df.train))
 
 
 
-Source: Udemy - Data Science and Machine Learning Bootcamp with R (Jose Portilla)
+Source: 
 
-    An Intro to Statistical Learning with Applications in R (Gareth       James, et al.) http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Sixth%20Printing.pdf
+Udemy - Data Science and Machine Learning Bootcamp with R (Jose Portilla)
+
+An Intro to Statistical Learning with Applications in R (Gareth James, et al.) http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Sixth%20Printing.pdf
