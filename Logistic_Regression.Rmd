@@ -1,8 +1,12 @@
 ---
 title: "Logistic Regression"
-output: pdf_document
-fontsize: 12pt
+author: Jason Barnes
 geometry: margin=1in
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+fontsize: 12pt
 ---
 Logistic Regression is used for classification. In linear regression the response varible (Y) is quantitative, but in many situations the response variable can be qualitative or categorical. Predicting a qualitative response for an observation can be referred to as classifying that observation, since it involves assigning the observation to a category, or class. On the other hand, often the methods used for classification first predict the probability of each of the categories of a qualitative variable, as the basis for making the classification. In this sense they also behave like regression methods. 
 
@@ -54,6 +58,7 @@ library(kableExtra)
 library(knitr)
 library(devtools)
 library(knitcitations)
+library(caTools)
 df.train <- read.csv("titanic_train.csv")
 ```
 
@@ -64,8 +69,208 @@ kable(head(df.train)) %>%
 
 ```
 
+Lets take a look at the structure of the data set
+
+```{r}
+str(df.train)
+```
+
+As you can see there is a total of 11 features, one thing we need to do is determine if there is an NA's or Nulls in the data set. One way to do this is by using the 'Ameila' package and creating a missing map.
+
+```{r}
+missmap(df.train, main = 'Missing Map', col = c('yellow', 'black'), legend = TRUE)
+```
+
+As you can see the Age column as a significant amount of missing data, one way to solve this is to create a function that imputs the median age by Pclass. Lets take a look at a boxplot and determine the medain age by Pclass.
+
+```{r}
+pl <- ggplot(df.train, aes(Pclass, Age))
+pl <- pl + geom_boxplot(aes(group = Pclass, fill = factor(Pclass), alpha = 0.4))
+pl + scale_y_continuous(breaks = seq(min(0), max(80),2)) + theme_bw()
+```
+
+As you can see the median age by Pclass is 37, 29 and 24 respectively. This makes sense as we would assume that the older you are the higher class you will be able to afford. 
+
+Now that we have visualized the ages lets build a function to create imputation of age based on class.
+
+```{r}
+impute_age <- function(age, class){
+    out <- age
+    for (i in 1:length(age)){
+        if (is.na(age[i])){
+          if (class[i] == 1){
+                out[i] <- 37
+            }else if (class[i] == 2){
+                out[i] <- 29
+            }else{
+                out[i] <- 24
+            }
+        }else{
+            out[i] <-  age[i]
+        }
+      }
+    return(out)
+}
+```
+
+The above function will look through all the ages and determine if the age is blank it will place the median age based on the class of the individual. If the age is already present it will simply keep the age. 
+
+Now pass the ages to the impute_age functio and assign it to fixed.ages 
+
+```{r}
+fixed.ages <-  impute_age(df.train$Age, df.train$Pclass)
+```
+
+Now we will have to take fixed.ages and replace the ages in the ages column. We can do this by assinging fixed.ages to the data frame column ages. 
+
+```{r}
+df.train$Age <- fixed.ages
+```
+
+Lets take another look at the Missing Map to ensure our assignments worked.
+
+```{r}
+missmap(df.train, main = 'Imputation Check', col = c('yellow', 'black'),legend = FALSE)
+```
+
+As you can see there is no more missing ages, the function worked. 
+
+Lets take another look at the structure of the data to determine what columns we want to use in the model.
+
+```{r}
+str(df.train)
+```
+
+In order to ensure the model works correctly we will have to remove some columns as they would simply complicate the model because there are to many levels associated with the factor. Take names for instance, each row contains a name of an individual that was on the titanic, this information is irrelevant to whether the individual survived or not so we will remove it. We will also remove PassengerIf, Ticket, Cabin, and Parch as they are also irrelevant in determining survival. 
+
+```{r}
+df.train <- df.train %>% 
+    select(-PassengerId, -Name, -Ticket, -Cabin, -Parch)
+```
+
+Now lets take a look at the head of the data frame. 
+
+```{r}
+head(df.train)
+
+```
+
+Next, we will convert Survived, Pclass and Sibsp to factors instead of integers. 
+
+```{r}
+df.train$Survived <- as.factor(df.train$Survived)
+df.train$Pclass <- as.factor(df.train$Pclass)
+df.train$SibSp <- as.factor(df.train$SibSp)
+```
+
+Verify the new structure
+
+```{r}
+str(df.train)
+```
+
+#### Building the model
+
+Since we are calculating a logistic regression we use the function glm (general linear model) and assign it to log.model. We have to add a few more cavets to the equation. Since we are determining whether someone survived or not we assign the Surrived feature as the first argument seperated by the tilda symbol, the "." represents 'everything' as in the rest of the features (Pclass, Age, Sex, etc.).
+The family argument is a description of the error distribution we choose binomial since we are trying to determine if someone survived (1) or didn't (0). Link simply tells the binomial function to use the logistic regression. 
+
+```{r}
+log.model <- glm(Survived ~ ., family = binomial(link = 'logit'), data = df.train)
+```
 
 
+#### Summary of the model
+
+```{r}
+summary(log.model)
+```
+The p-value for each term tests the null hypothesis that the coefficient is equal to zero (no effect). A low p-value (< 0.05) indicates that you can reject the null hypothesis. In other words, a predictor that has a low p-value is likely to be a meaningful addition to your model because changes in the predictor's value are related to changes in the response variable (Survived).
+Conversely, a larger (insignificant) p-value suggests that changes in the predictor are not associated with changes in the response.
+
+As you can tell by the model summary Pclass, Sex and Age are 
+statistically significant in the survivability of the individual. 
+
+Now lets train the model to a test set so that we can determine the accuracy of the model. 
+
+#### Train vs Test checking the models accuracy
+
+Lets create a test data frame by randomlly spliting the train data frame with a 70/30 split. 
+
+```{r}
+split <- sample.split(df.train$Survived, SplitRatio = 0.7)
+final.train <- subset(df.train, split == TRUE)
+final.test <- subset(df.train, split == FALSE)
+```
+
+The sample.split function randomlly splits the data frame by the directed split ratio in our case 70% and assigns it a 1 (TRUE) and the other 30% a 0 (FALSE) to each observation. Finally, all we need to do is assign each subset (split) to either a train or test data frame. 
+
+
+Now lets retrain the model on the 70% split final.train. 
+
+```{r}
+final.log.model <- glm(Survived ~ ., family = binomial(link = 'logit'), data = final.train)
+```
+
+Lets take a look at the summary of the new final log model.
+
+```{r}
+summary(final.log.model)
+```
+
+Now lets predict; we will assign the prediction to fitted.probabilities
+
+```{r}
+fitted.probabilities <-  predict(final.log.model, final.test, type = 'response')
+```
+
+Type is equal to response because we are trying to predict whether the lived or died or 0 and 1.
+
+We want to assign the fitted.probabilities a 1 or a 0 so if the probability is greater than .5 then assign it a one else assign it a zero. 
+
+```{r}
+fitted.results <- ifelse(fitted.probabilities > 0.5, 1, 0) 
+fitted.results
+```
+
+Lets determine the error
+
+```{r}
+missClassError <-  mean(fitted.results != final.test$Survived)
+missClassError
+```
+
+Finally, we will check for accuracy and assign the class error to accuracy and call accuracy to determine the result. 
+
+```{r}
+accuracy <- 1 - missClassError
+accuracy
+```
+
+As you can see based on the train and test data the model is 86% accurate in predicting whether someone survived or died based on input variables. 
+
+Lastly, we will create a confusion matrix
+
+```{r}
+table(final.test$Survived, fitted.probabilities > 0.5)
+```
+
+#### Breaking down the confusion matrix
+
+0 and false (TN: True Negative): 152
+
+0 and true (FP: False Positive): 13
+
+1 and False (FN: False Negative): 24
+
+1 and True (TP: True Positive): 79
+
+Total Predicted False (Did not Survive): 176
+
+Total Predicted True (Survived): 92
+
+Total Actual False (Did not Survive): 165
+
+Total Actual True (Survived): 103
 
 
 Source: 
