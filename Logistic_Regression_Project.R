@@ -1,6 +1,7 @@
 library(tidyverse)
 library(Amelia)
-
+library(ggthemes)
+library(caTools)
 adult <- read.csv("adult_sal.csv")
 
 head(adult)
@@ -112,4 +113,52 @@ table(adult$type_employer)
 
 missmap(adult, col = c('yellow', 'black'), legend = TRUE, main = 'Missingness Map', y.at = c(1), y.labels = c(''))
 
+# remove NAs now remember this may not always be the best decision
 
+adult <- na.omit(adult)
+str(adult)
+
+# check to see if rows with the missing values have been removed
+missmap(adult, col = c('yellow', 'black'), legend = TRUE, main = 'Missingness Map', y.at = c(1), y.labels = c(''))
+
+ggplot(adult, aes(age)) +
+    geom_histogram(aes( fill = income), color = 'black', binwidth = 1) + 
+    theme_bw()
+
+ggplot(adult, aes(hr_per_week)) + 
+    geom_histogram() +
+    theme_clean()
+
+ggplot(adult, aes(country)) +
+    geom_bar(aes(fill = income)) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    theme_clean()
+
+# Building the model
+
+head(adult)
+
+# Split the data to train and test
+
+set.seed(101)
+sample <- sample.split(adult$income, SplitRatio = 0.7)
+train <- subset(adult, split == TRUE)
+test <- subset(adult, split == FALSE)
+
+model <- glm(income ~ ., family = binomial('logit'), data = train)
+
+summary(model)
+
+new.step.model <- step(model)
+summary(new.step.model)
+
+fitted.probabilities <- test$predicted.income <- predict(model, newdata = test, type = 'response')
+fitted.results <- ifelse(fitted.probabilities > 0.5, 1, 0)
+fitted.results
+
+missClassError <- mean(fitted.results != test$income)
+missClassError
+
+table(test$income, test$predicted.income > 0.5)
+#accuracy
+(6446+1391)/(6446+474+904+1391)
