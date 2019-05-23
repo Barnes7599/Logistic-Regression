@@ -1,4 +1,5 @@
 library(tidyverse)
+library(Amelia)
 
 adult <- read.csv("adult_sal.csv")
 
@@ -97,8 +98,18 @@ group_country <- function(ctry){
 adult$country <- sapply(adult$country, group_country)
 table(adult$country)
 str(adult)
+
 # Turn the columns we changed back to factors
 adult$country <- as.factor(adult$country)
+# Or... adult$country <-  sapply(adult$country,factor)
 adult$marital <- as.factor(adult$marital)
 adult$type_employer <- as.factor(adult$type_employer)
+
+
+# Lets deal with the missing data, first convert all the ? to NA
+adult[adult == '?'] <- NA
+table(adult$type_employer)
+
+missmap(adult, col = c('yellow', 'black'), legend = TRUE, main = 'Missingness Map', y.at = c(1), y.labels = c(''))
+
 

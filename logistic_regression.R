@@ -98,6 +98,8 @@ str(df.train)
 
 log.model <- glm(Survived ~ ., family = binomial(link = 'logit'), data = df.train)
 
+?glm
+
 summary(log.model)
 #*** low probablity of the varible not being significant
 
