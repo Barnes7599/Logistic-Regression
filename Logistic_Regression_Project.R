@@ -129,7 +129,7 @@ ggplot(adult, aes(hr_per_week)) +
     geom_histogram() +
     theme_clean()
 
-ggplot(adult, aes(country)) +
+ggplot(adult, aes(region)) +
     geom_bar(aes(fill = income)) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
     theme_clean()
@@ -137,6 +137,7 @@ ggplot(adult, aes(country)) +
 # Building the model
 
 head(adult)
+adult <- rename(adult, region = country)
 
 # Split the data to train and test
 
