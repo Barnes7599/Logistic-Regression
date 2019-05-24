@@ -134,32 +134,58 @@ ggplot(adult, aes(region)) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
     theme_clean()
 
-# Building the model
+###############################
+## LOGISTIC REGRESSION MODEL ##
+###############################
 
 head(adult)
 adult <- rename(adult, region = country)
 
-# Split the data to train and test
-
+# TRAIN TEST SPLIT 
 set.seed(101)
+# CREATE SAMPLE
 sample <- sample.split(adult$income, SplitRatio = 0.7)
-train <- subset(adult, split == TRUE)
-test <- subset(adult, split == FALSE)
+# SPLIT TRAINING DATA
+train <- subset(adult, sample == TRUE)
+# SPLIT TEST DATA
+test <- subset(adult, sample == FALSE)
 
+### MODEL ###
 model <- glm(income ~ ., family = binomial('logit'), data = train)
 
 summary(model)
-
+#### STEP function tries to eliminate varibales that are not contributing significance to the model. 
 new.step.model <- step(model)
 summary(new.step.model)
 
-fitted.probabilities <- test$predicted.income <- predict(model, newdata = test, type = 'response')
-fitted.results <- ifelse(fitted.probabilities > 0.5, 1, 0)
-fitted.results
 
-missClassError <- mean(fitted.results != test$income)
-missClassError
+test$predicted.income <- predict(model, newdata = test, type = 'response')
 
 table(test$income, test$predicted.income > 0.5)
+# TN 6372
+# FN 872
+# FP 548
+# TP 1423
+#Actual Negative = TN + FP
+#Actual Positive = FN + TP
+#Predicted Negative = TN + FN
+#Predicted Positive = FP + TP
+
+### Recal vs Accuracy vs Percision
+#https://towardsdatascience.com/accuracy-precision-recall-or-f1-331fb37c5cb9
 #accuracy
-(6446+1391)/(6446+474+904+1391)
+#https://cdn-images-1.medium.com/max/800/1*7J08ekAwupLBegeUI8muHA.png
+acc <- (6372 + 1423)/(6372 + 548 + 872 + 1423)
+acc
+# Recall: Recall actually calculates how many of the Actual Positives our model capture through labeling it as Positive (True Positive). Applying the same understanding, we know that Recall shall be the model metric we use to select our best model when there is a high cost associated with False Negative. For instance, in fraud detection or sick patient detection. If a fraudulent transaction (Actual Positive) is predicted as non-fraudulent (Predicted Negative), the consequence can be very bad for the bank. Similarly, in sick patient detection. If a sick patient (Actual Positive) goes through the test and predicted as not sick (Predicted Negative). The cost associated with False Negative will be extremely high if the sickness is contagious. https://cdn-images-1.medium.com/max/800/1*BBhWQC-m0CLN4sVJ0h5fJQ.jpeg
+
+recall <- 6372/(6372 + 548)
+# Precision: Precision talks about how precise/accurate your model is out of those predicted positive, how many of them are actual positive. Precision is a good measure to determine, when the costs of False Positive is high. For instance, email spam detection. In email spam detection, a false positive means that an email that is non-spam (actual negative) has been identified as spam (predicted spam). The email user might lose important emails if the precision is not high for the spam detection model. https://cdn-images-1.medium.com/max/800/1*PULzWEven_XAZjiMNizDCg.png
+precision <- 6372/(6372 + 782)
+
+# f1: F1 Score is needed when you want to seek a balance between Precision and Recall. Right…so what is the difference between F1 Score and Accuracy then? We have previously seen that accuracy can be largely contributed by a large number of True Negatives which in most business circumstances, we do not focus on much whereas False Negative and False Positive usually has business costs (tangible & intangible) thus F1 Score might be a better measure to use if we need to seek a balance between Precision and Recall AND there is an uneven class distribution (large number of Actual Negatives). https://cdn-images-1.medium.com/max/800/1*T6kVUKxG_Z4V5Fm1UXhEIw.png
+
+f1 <- (precision * recall) / (precision + recall)
+recall
+precision
+f1
