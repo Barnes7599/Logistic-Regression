@@ -273,8 +273,3 @@ Total Actual False (Did not Survive): 165
 Total Actual True (Survived): 103
 
 
-Source: 
-
-Udemy - Data Science and Machine Learning Bootcamp with R (Jose Portilla)
-
-An Intro to Statistical Learning with Applications in R (Gareth James, et al.) http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Sixth%20Printing.pdf
